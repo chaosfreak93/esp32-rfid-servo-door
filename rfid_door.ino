@@ -46,6 +46,7 @@ void setup() {
   servo1.write(0);
   SPI.begin();      // init SPI bus
   rfid.PCD_Init();  // init MFRC522
+  delay(10);
   xTaskCreatePinnedToCore(
     readRFID,    // Function to implement the task
     "readRFID",  // Name of the task
@@ -62,8 +63,8 @@ void loop() {
 }
 
 void readRFID(void *pvParameters) {
-  while (1) {
-    if (rfid.PICC_IsNewCardPresent() && rfid.PICC_ReadCardSerial()) {
+  for (;;) {
+    if (!rfid.PICC_IsNewCardPresent() || !rfid.PICC_ReadCardSerial()) continue;
 
       // print UID in Serial Monitor in the hex format
       String readRFID = "";
@@ -120,11 +121,10 @@ void runQuery() {
 void refreshDataset() {
   ESP32_MYSQL_DISPLAY("Connecting...");
 
-  //if (conn.connect(server, server_port, user, password))
-  if (conn.connect(server, server_port, "esp32", "Schranke")) {
-    delay(500);
+  if (conn.connectNonBlocking(server, server_port, "esp32", "Schranke") == RESULT_OK) {
+    delay(750);
     runQuery();
-    conn.close();  // close the connection
+    conn.close();
   } else {
     ESP32_MYSQL_DISPLAY("\nConnect failed. Trying again on next iteration.");
   }
