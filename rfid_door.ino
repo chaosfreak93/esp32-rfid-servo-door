@@ -23,7 +23,6 @@ MFRC522 rfid(SS_PIN, RST_PIN);
 String allowedRFIDs[1000];
 
 void setup() {
-  // put your setup code here, to run once:
   Serial.begin(9600);
   while (!Serial && millis() < 5000)
     ;
@@ -43,8 +42,8 @@ void setup() {
 
   servo1.attach(SERVO_PIN);
   servo1.write(0);
-  SPI.begin();      // init SPI bus
-  rfid.PCD_Init();  // init MFRC522
+  SPI.begin();
+  rfid.PCD_Init();
   delay(10);
   xTaskCreatePinnedToCore(
     readRFID,    // Function to implement the task
@@ -53,7 +52,7 @@ void setup() {
     NULL,        // Task input parameter
     0,           // Priority of the task
     NULL,        // Task handle.
-    1);
+    1);          // Core Number
 }
 
 void loop() {
@@ -65,7 +64,6 @@ void readRFID(void *pvParameters) {
   for (;;) {
     if (!rfid.PICC_IsNewCardPresent() || !rfid.PICC_ReadCardSerial()) continue;
 
-    // print UID in Serial Monitor in the hex format
     String readRFID = "";
     for (int i = 0; i < rfid.uid.size; i++) {
       readRFID.concat(rfid.uid.uidByte[i] < 0x10 ? "0" : "");
@@ -73,8 +71,8 @@ void readRFID(void *pvParameters) {
     }
     readRFID.toUpperCase();
 
-    rfid.PICC_HaltA();       // halt PICC
-    rfid.PCD_StopCrypto1();  // stop encryption on PCD
+    rfid.PICC_HaltA();
+    rfid.PCD_StopCrypto1();
 
     if (allowedRFIDs == nullptr) continue;
     for (int f = 0; f < (sizeof(allowedRFIDs) / sizeof(String)); f++) {
@@ -95,10 +93,7 @@ void runQuery() {
     return;
   }
 
-  // Show the result
-  // Fetch the columns and print them
   column_names *cols = query_mem.get_columns();
-  // Read the rows and print them
   row_values *row = NULL;
   int rfidCount = 0;
 
